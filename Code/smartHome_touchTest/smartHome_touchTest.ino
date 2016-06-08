@@ -21,8 +21,8 @@
 //------------------------------BUTTON------------------------------//
 // Defines for the button pin and the delays for the actions
 #define BUTTON_PIN A7
-#define BUTTON_ACTION_DELAY_STREAM 2000
-#define BUTTON_ACTION_DELAY_PROGRAM 5000
+#define BUTTON_ACTION_DELAY_STREAM 100
+#define BUTTON_ACTION_DELAY_PROGRAM 1000
 #define BUTTON_ACTION_DELAY_ERASE_ALL 4000
 #define BUTTON_ACTION_DELAY_NONE 6000
 
@@ -135,17 +135,6 @@ bool streamIncoming = false;
 
 
 bool keywordStored = true;
-//------------------------------Variable for touch debounce handling-----------//
-
-int TouchState;             // the current reading from the input pin
-int lastTouchState = 0;   // the previous reading from the input pin
-int TouchStateTemp = 0;   // the previous reading from the input pin
-
-// the following variables are long's because the time, measured in miliseconds,
-// will quickly become a bigger number than can be stored in an int.
-long lastDebounceTime = 0;  // the last time the output pin was toggled
-long switchDelay0= 2000;    // the debounce time; increase if the output flickers
-long switchDelay1= 4000;
 //----------------capacitive sensor--------------------------//
 CapacitiveSensor   cs_0_1 = CapacitiveSensor(0,1);
 
@@ -185,29 +174,20 @@ elapsedMicros calculationTimePerWindow;
 
 //------------------------------LOOP--------------------------------//
 void loop() {
-   
   // Updates the volume of the speaker if needed
   updateSpeakerVolume();
 
-  //Touch sense
-  touchSense();
-
-  // Handle Touch input with debouncing
- //handleTouchInput();
-  
   // Recognize command
- handleCommandDetection();
+  handleCommandDetection();
 
- // Handle button presses
-// handleButton();
+  // Handle button presses
+  handleButton();
 
   // Read data if available
- //handleIncomingStream();
+  handleIncomingStream();
 
- // Stream data if needed
+  // Stream data if needed
   handleOutgoingStream();
-//dummy
-//handledummy();
 }
 
 // Handles WUW detector
@@ -361,128 +341,34 @@ void handleIncomingStream() {
   }
   
 }
-int temp=0;
-int Tsense=0;
-int lastTsense=0;
-long timeOn=0;
-int debounce=500;
-long delayForGreen=1000;
-long delayForBlue=4000;
-long delayForRed=4000;
-long delayNone=5000;
-int Tcase=0;
 
-void touchSense(){
+#define TOUCH_DETECT_THRSHLD 10000
+/* Reading the Touch Input pins */
+int TouchRead(){
+  int TouchStatus = false;
   long touchPin = cs_0_1.capacitiveSensor(30);
-  Serial.println(timeOn);
-  Serial.println(temp);
-  Serial.println(lastTsense);
-  Serial.println(Tsense);
-  //chech if the pin is touched and if so assign temp to 1 else keep it to 0 
-  if (touchPin>10000){
-    temp=1;
+  if (TOUCH_DETECT_THRSHLD < touchPin){
+    TouchStatus = true;     
   }
-  else{
-    temp=0;
-    Tsense=0;
-    lastTsense=0;
+  else
+  {
+    TouchStatus = false; 
   }
-  //whenever there is a change with the touch state,update the timer
-  if (Tsense != lastTsense){
-    timeOn = millis();
-  }
-  //check if touch is on for action to start
-  if ((millis()-timeOn)>debounce){
-    Tsense=temp;
-  }
-    switch (Tsense){
-      case 1:{
-    if (timeOn>0 && ((millis()-timeOn)> delayForGreen) && Tcase==0){
-    setLED(GREEN);
-    Tcase = 1;}
-//   else  if (timeOn>0 && ((millis()-timeOn)> delayForBlue) && Tcase==1){
-//     setLED(BLUE);
-//    Tcase = 2;
-//  } else if (timeOn>0 && ((millis()-timeOn)> delayForRed) && Tcase==2){
-//    setLED(RED);
-//    Tcase = 3;
-//  } else if (timeOn>0 && ((millis()-timeOn)> delayNone) && Tcase==3){
-//    Tcase = 0;
-//    setLED(WHITE);
-//}
-else{
-      Tcase=0;
-    }
-}}
-  //check the duration for which the touch was on
-  switch(Tcase){
-  case 1:
-           if (!streamMic) {
-            startStreamingMic();
-           }
-          else {
-            stopStreamingMicDiscard();
-          }
-          break;
-  case 2:
-          stopStreamingMic();
-          if (DEBUG) Serial.println(F("Add new command"));
-          addWakeupWord();
-          setLED(WHITE);
-          break;
-  case 3:
-          stopStreamingMic();
-          if (DEBUG) Serial.println(F("Delete all commands"));
-          deleteAllWakeupWords();
-          setLED(WHITE);
-          break;
-  case 4:
-          if (DEBUG) Serial.println(F("Misspressed"));
-          setLED(WHITE);
-          break;
-}
-//
-}
-//void handleTouchInput()
-//{
-//  int switchCase=0;
-//    long TouchReading = cs_0_1.capacitiveSensor(30);
-//    if (10000 < TouchReading){
-//        TouchStateTemp = 1;
-//    }
-//    else{
-//        TouchStateTemp = 0;
-//        TouchState = 0;
-//    }
-//    if (TouchState != lastTouchState) {
-//      // reset the debouncing timer
-//      lastDebounceTime = millis();
-//    } 
-//    if ((millis() - lastDebounceTime) > switchDelay0) {
-//      // whatever the reading is at, it's been there for longer
-//      // than the debounce delay, so take it as the actual current state:
-//        TouchState=TouchStateTemp;
-//       
-//      
-//    //trying to check if touch is really working
-//   
-//    TouchState = lastTouchState;
-//}
-//}  
-//    
-//    
+  return TouchStatus;
+}  
+
 // Handle all button presses
 elapsedMillis buttonTime;
 int buttonState = 0;
 void handleButton() {
-   Serial.println(TouchState);
-  if (TouchState==1) {
+  if (TouchRead()) { // Digital Read replaced by TouchRead for handling touch
+    Serial.println(TouchRead());
     Serial.println(F("Pressed"));
     // Stop the easy vr recognition
     // TODO: easyvr.stop();
     // Debounce delay
     delay(BUTTON_ACTION_DELAY_STREAM);
-    if (TouchState==1) {
+    if (TouchRead()) { // Digital Read replaced by TouchRead for handling touch
       delay(200);
       // Waited enough for action 1 -> streaming
       if (DEBUG) Serial.print(F("1..."));
@@ -492,7 +378,7 @@ void handleButton() {
       buttonTime = 0;
       buttonState = 0;
       // Will wait till Button is released
-      while (TouchState==1) {
+      while (TouchRead()) { // Digital Read replaced by TouchRead for handling touch
         // If waited enough for action 2 -> adding
         if (buttonTime > BUTTON_ACTION_DELAY_PROGRAM && buttonState == 0) {
           buttonState = 1;
@@ -544,50 +430,6 @@ void handleButton() {
     //easyvr.recognizeCommand(GROUP);
   }
 }
-
-
-//void touchsense(){
-//  
-//  
-//}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // Add a new wakeup word
 void addWakeupWord() {
@@ -826,5 +668,4 @@ void templateLearned(int success) {
   audioRecorder.begin();
   keywordStored = true;
 }
-
 
