@@ -136,18 +136,16 @@ bool streamIncoming = false;
 
 bool keywordStored = true;
 //------------------------------Variable for touch debounce handling-----------//
-#define ENABLED 1
-#define DISABLED 0
 
 int TouchState;             // the current reading from the input pin
-int lastTouchState = DISABLED;   // the previous reading from the input pin
-int TouchStateTemp = DISABLED;   // the previous reading from the input pin
+int lastTouchState = 0;   // the previous reading from the input pin
+int TouchStateTemp = 0;   // the previous reading from the input pin
 
 // the following variables are long's because the time, measured in miliseconds,
 // will quickly become a bigger number than can be stored in an int.
 long lastDebounceTime = 0;  // the last time the output pin was toggled
-long debounceDelay= 500;    // the debounce time; increase if the output flickers
-
+long switchDelay0= 2000;    // the debounce time; increase if the output flickers
+long switchDelay1= 4000;
 //----------------capacitive sensor--------------------------//
 CapacitiveSensor   cs_0_1 = CapacitiveSensor(0,1);
 
@@ -191,14 +189,17 @@ void loop() {
   // Updates the volume of the speaker if needed
   updateSpeakerVolume();
 
+  //Touch sense
+  touchSense();
+
   // Handle Touch input with debouncing
- handleTouchInput();
+ //handleTouchInput();
   
   // Recognize command
  handleCommandDetection();
 
  // Handle button presses
- handleButton();
+// handleButton();
 
   // Read data if available
  handleIncomingStream();
@@ -360,74 +361,141 @@ void handleIncomingStream() {
   }
   
 }
+int temp=0;
+int Tsense=0;
+int lastTsense=0;
+long timeOn=0;
+long delayForGreen=2000;
+long delayForBlue=4000;
+long delayForRed=4000;
+long delayNone=5000;
+int Tcase=0;
 
-
-void handleTouchInput()
-{
-    long TouchReading = cs_0_1.capacitiveSensor(30);
-    if (10000 < TouchReading)
-    {
-        TouchStateTemp = ENABLED;
-    }
-    else
-    {
-        TouchStateTemp = DISABLED;
-        TouchState = 0;
-    }
-    if (TouchState != lastTouchState) {
-      // reset the debouncing timer
-      lastDebounceTime = millis();
-    } 
-    if ((millis() - lastDebounceTime) > debounceDelay) {
-      // whatever the reading is at, it's been there for longer
-      // than the debounce delay, so take it as the actual current state:
-      TouchState=TouchStateTemp;
-    }
-    //trying to check if touch is really working
-Serial.println(TouchState);
-}  
-    
-    
+void touchSense(){
+  long touchPin = cs_0_1.capacitiveSensor(30);
+  Serial.println(touchPin);
+  Serial.println(timeOn);
+  Serial.println(Tsense);
+  //chech if the pin is touched and if so assign temp to 1 else keep it to 0 
+  if (touchPin>10000){
+    temp=1;
+  }
+  else{
+    temp=0;
+    Tsense=0;
+  }
+  //whenever there is a change with the touch state,update the timer
+  if (Tsense != lastTsense){
+    timeOn = millis();
+  }
+  //check if touch is on for action to start
+  if (timeOn>0 && ((millis()-timeOn)>delayForGreen)){
+    setLED(GREEN);
+    Tcase = 1;
+  } else if (timeOn>0 && ((millis()-timeOn)> delayForBlue) && Tcase==1){
+     setLED(BLUE);
+    Tcase = 2;
+  } else if (timeOn>0 && ((millis()-timeOn)> delayForRed) && Tcase==2){
+    setLED(RED);
+    Tcase = 3;
+  } else if (timeOn>0 && ((millis()-timeOn)> delayNone) && Tcase==3){
+    Tcase = 4;
+    setLED(WHITE);
+  }
+  //check the duration for which the touch was on
+  switch(Tcase){
+  case 1:
+           if (streamMic != true) {
+            startStreamingMic();
+          } else {
+            stopStreamingMicDiscard();
+          }
+          break;
+  case 2:
+          stopStreamingMic();
+          if (DEBUG) Serial.println(F("Add new command"));
+          addWakeupWord();
+          setLED(WHITE);
+          break;
+  case 3:
+          stopStreamingMic();
+          if (DEBUG) Serial.println(F("Delete all commands"));
+          deleteAllWakeupWords();
+          setLED(WHITE);
+          break;
+  case 4:
+          if (DEBUG) Serial.println(F("Misspressed"));
+          setLED(WHITE);
+          break;
+}
+lastTsense = Tsense;
+}
+//void handleTouchInput()
+//{
+//  int switchCase=0;
+//    long TouchReading = cs_0_1.capacitiveSensor(30);
+//    if (10000 < TouchReading){
+//        TouchStateTemp = 1;
+//    }
+//    else{
+//        TouchStateTemp = 0;
+//        TouchState = 0;
+//    }
+//    if (TouchState != lastTouchState) {
+//      // reset the debouncing timer
+//      lastDebounceTime = millis();
+//    } 
+//    if ((millis() - lastDebounceTime) > switchDelay0) {
+//      // whatever the reading is at, it's been there for longer
+//      // than the debounce delay, so take it as the actual current state:
+//        TouchState=TouchStateTemp;
+//       
+//      
+//    //trying to check if touch is really working
+//   
+//    TouchState = lastTouchState;
+//}
+//}  
+//    
+//    
 // Handle all button presses
 elapsedMillis buttonTime;
 int buttonState = 0;
-
 void handleButton() {
- 
-  Serial.println(TouchStateTemp);    
+   Serial.println(TouchState);
   if (TouchState==1) {
     Serial.println(F("Pressed"));
     // Stop the easy vr recognition
     // TODO: easyvr.stop();
     // Debounce delay
     delay(BUTTON_ACTION_DELAY_STREAM);
-    if (1==TouchStateTemp) {
-      delay(1000);
+    if (TouchState==1) {
+      delay(200);
       // Waited enough for action 1 -> streaming
-      if (1==TouchStateTemp) Serial.print(F("1..."));
+      if (DEBUG) Serial.print(F("1..."));
       // LED Color to GREEN -> Streaming
       setLED(GREEN);
       // Reset variables
       buttonTime = 0;
       buttonState = 0;
       // Will wait till Button is released
-      while (1==TouchStateTemp) {
+      while (TouchState==1) {
         // If waited enough for action 2 -> adding
         if (buttonTime > BUTTON_ACTION_DELAY_PROGRAM && buttonState == 0) {
           buttonState = 1;
-          if (1==TouchStateTemp) Serial.print(F("2..."));
+          if (DEBUG) Serial.print(F("2..."));
           // LED Color to BLUE -> Adding
           setLED(BLUE);
           // If waited enough for action 3 -> deleting
         } else if (buttonTime > BUTTON_ACTION_DELAY_ERASE_ALL && buttonState == 1) {
           buttonState = 2;
-          if (1==TouchStateTemp) Serial.print(F("3..."));
+          if (DEBUG) Serial.print(F("3..."));
           // LED Color to RED -> Deleting
           setLED(RED);
           // If waited enough for action 4 -> nothing
         } else if (buttonTime > BUTTON_ACTION_DELAY_NONE && buttonState == 2) {
           buttonState = 3;
-          if (1==TouchStateTemp) Serial.println(F("4"));
+          if (DEBUG) Serial.println(F("4"));
           setLED(WHITE);
         }
       }
@@ -463,6 +531,50 @@ void handleButton() {
     //easyvr.recognizeCommand(GROUP);
   }
 }
+
+
+//void touchsense(){
+//  
+//  
+//}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // Add a new wakeup word
 void addWakeupWord() {
