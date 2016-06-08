@@ -365,7 +365,7 @@ int temp=0;
 int Tsense=0;
 int lastTsense=0;
 long timeOn=0;
-long delayForGreen=2000;
+long delayForGreen=500;
 long delayForBlue=4000;
 long delayForRed=4000;
 long delayNone=5000;
@@ -373,9 +373,9 @@ int Tcase=0;
 
 void touchSense(){
   long touchPin = cs_0_1.capacitiveSensor(30);
-  Serial.println(temp);
+  Serial.println(lastTsense);
   Serial.println(timeOn);
-  Serial.println(Tsense);
+  Serial.println(Tcase);
   //chech if the pin is touched and if so assign temp to 1 else keep it to 0 
   if (touchPin>10000){
     temp=1;
@@ -389,7 +389,7 @@ void touchSense(){
     timeOn = millis();
   }
   //check if touch is on for action to start
-  if (timeOn>0 && ((millis()-timeOn)>delayForGreen)){
+  if (timeOn>0 && ((millis()-timeOn)>delayForGreen) && Tcase==0){
     lastTsense=temp;
     setLED(GREEN);
     Tcase = 1;
@@ -429,7 +429,7 @@ void touchSense(){
           setLED(WHITE);
           break;
 }
-lastTsense = Tsense;
+//lastTsense = Tsense;
 }
 //void handleTouchInput()
 //{
