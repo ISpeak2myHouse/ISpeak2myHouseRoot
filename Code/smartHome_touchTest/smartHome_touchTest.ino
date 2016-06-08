@@ -385,6 +385,7 @@ void touchSense(){
   else{
     temp=0;
     Tsense=0;
+    lastTsense=0;
   }
   //whenever there is a change with the touch state,update the timer
   if (Tsense != lastTsense){
@@ -399,9 +400,6 @@ void touchSense(){
     if (timeOn>0 && ((millis()-timeOn)> delayForGreen) && Tcase==0){
     setLED(GREEN);
     Tcase = 1;}
-    else{
-      Tcase=0;
-    }
 //   else  if (timeOn>0 && ((millis()-timeOn)> delayForBlue) && Tcase==1){
 //     setLED(BLUE);
 //    Tcase = 2;
@@ -412,6 +410,9 @@ void touchSense(){
 //    Tcase = 0;
 //    setLED(WHITE);
 //}
+else{
+      Tcase=0;
+    }
 }}
   //check the duration for which the touch was on
   switch(Tcase){
@@ -440,7 +441,7 @@ void touchSense(){
           setLED(WHITE);
           break;
 }
-//lastTsense = Tsense;
+//
 }
 //void handleTouchInput()
 //{
