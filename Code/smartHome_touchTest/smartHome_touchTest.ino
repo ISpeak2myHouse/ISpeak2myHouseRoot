@@ -202,7 +202,7 @@ void loop() {
 // handleButton();
 
   // Read data if available
- handleIncomingStream();
+ //handleIncomingStream();
 
  // Stream data if needed
   handleOutgoingStream();
@@ -366,7 +366,7 @@ int Tsense=0;
 int lastTsense=0;
 long timeOn=0;
 int debounce=500;
-long delayForGreen=500;
+long delayForGreen=1000;
 long delayForBlue=4000;
 long delayForRed=4000;
 long delayNone=5000;
@@ -374,10 +374,10 @@ int Tcase=0;
 
 void touchSense(){
   long touchPin = cs_0_1.capacitiveSensor(30);
+  Serial.println(timeOn);
+  Serial.println(temp);
   Serial.println(lastTsense);
   Serial.println(Tsense);
-  Serial.println(timeOn);
-  Serial.println(Tcase);
   //chech if the pin is touched and if so assign temp to 1 else keep it to 0 
   if (touchPin>10000){
     temp=1;
@@ -398,17 +398,21 @@ void touchSense(){
       case 1:{
     if (timeOn>0 && ((millis()-timeOn)> delayForGreen) && Tcase==0){
     setLED(GREEN);
-    Tcase = 1;
-  } else  if (timeOn>0 && ((millis()-timeOn)> delayForBlue) && Tcase==1){
-     setLED(BLUE);
-    Tcase = 2;
-  } else if (timeOn>0 && ((millis()-timeOn)> delayForRed) && Tcase==2){
-    setLED(RED);
-    Tcase = 3;
-  } else if (timeOn>0 && ((millis()-timeOn)> delayNone) && Tcase==3){
-    Tcase = 0;
-    setLED(WHITE);
-  }}}
+    Tcase = 1;}
+    else{
+      Tcase=0;
+    }
+//   else  if (timeOn>0 && ((millis()-timeOn)> delayForBlue) && Tcase==1){
+//     setLED(BLUE);
+//    Tcase = 2;
+//  } else if (timeOn>0 && ((millis()-timeOn)> delayForRed) && Tcase==2){
+//    setLED(RED);
+//    Tcase = 3;
+//  } else if (timeOn>0 && ((millis()-timeOn)> delayNone) && Tcase==3){
+//    Tcase = 0;
+//    setLED(WHITE);
+//}
+}}
   //check the duration for which the touch was on
   switch(Tcase){
   case 1:
