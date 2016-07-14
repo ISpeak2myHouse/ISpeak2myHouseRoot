@@ -367,7 +367,7 @@ void handleIncomingStream() {
 #define TOUCH_DETECT_THRSHLD 1100
 int TouchRead(){
   int TouchStatus=false;
-  long touchPin=touchRead(0);
+  long touchPin=touchRead(19);
   if(touchPin > TOUCH_DETECT_THRSHLD){
     TouchStatus=true;
   }
