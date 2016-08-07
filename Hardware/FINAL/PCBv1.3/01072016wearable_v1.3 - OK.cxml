@@ -1,0 +1,14 @@
+<panel>
+   <size>Small</size>
+   <boards class="java.util.ArrayList">
+      <panelBoard>
+         <filename>D:\Mes Documents\03 - Freiburg Universitaet\06 - Kurse\SS16\06 - Embedded Systems\02 - HW\01 - Wearable\FINAL\PCBv1.3\01072016wearable_v1.3 - OK</filename>
+         <x>6994</x>
+         <y>16157</y>
+         <angle>0</angle>
+         <generateOutline>true</generateOutline>
+         <topLayerTimestamp>2016-07-08 13:28:11.241 CEST</topLayerTimestamp>
+         <bottomLayerTimestamp>2016-07-08 13:28:11.268 CEST</bottomLayerTimestamp>
+      </panelBoard>
+   </boards>
+</panel>

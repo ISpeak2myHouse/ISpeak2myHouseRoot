@@ -1,0 +1,15 @@
+LED red		20		OK
+LED blue	16		OK
+LED green	17		OK
+
+ButtonIn	21		OK
+
+NRF				OK
+
+Mic		A1		OK
+
+SD				OKKKKKKKKKKKKK
+
+Battery				TBC
+
+Audio Amp			NOK
