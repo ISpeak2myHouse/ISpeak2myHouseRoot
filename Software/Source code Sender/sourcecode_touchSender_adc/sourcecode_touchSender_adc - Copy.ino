@@ -72,19 +72,19 @@ KeyWordDetector keyWordDetector;
 
 //------------------------------AUDIO_BOARD-------------------------//
 // GUItool: begin automatically generated code
-AudioInputI2S            audioInput;           //xy=105,63
+AudioInputAnalog         microphoneInput(A1);           //xy=105,63
 AudioRecordQueue         audioRecorder;         //xy=281,63
-AudioOutputI2S           audioOutput;           //xy=470,120
+AudioOutputAnalog        dac1;           //xy=470,120
 AudioEffectBitcrusher    bitCrusher;
 AudioPlayQueue           audioPlayer;
 AudioPlaySdWav           memorySound;
 AudioMixer4              mixAudioOut;
 AudioConnection          c1(memorySound, 0, mixAudioOut, 0);
 AudioConnection          c4(audioPlayer, 0, mixAudioOut, 1);
-AudioConnection          lineInMonoConn1(audioInput, 1, bitCrusher, 0);
+AudioConnection          lineInMonoConn1(microphoneInput, 1, bitCrusher, 0);
 AudioConnection          lineInMonoConn2(bitCrusher, audioRecorder);
-AudioConnection          lineOutL(mixAudioOut, 0, audioOutput, 0);
-AudioConnection          lineOutR(mixAudioOut, 0, audioOutput, 1);
+AudioConnection          lineOutL(mixAudioOut, 0, dac1, 0);
+AudioConnection          lineOutR(mixAudioOut, 0, dac1, 1);
 AudioControlSGTL5000     sgtl5000;     //xy=265,212
 // GUItool: end automatically generated code
 // Input on the audio shield
